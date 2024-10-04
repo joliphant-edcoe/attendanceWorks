@@ -162,6 +162,47 @@ class AttendanceTruancySupp:
             )
         )
 
+    def read_data_and_run_all_reports(self):
+        self.read_data()
+        self.tweak_student()
+        self.report_all_students()
+        self.report_absence_types()
+        self.report_absence_by_school()
+        self.report_absence_by_gender()
+        self.report_absence_by_grade()
+        self.report_absence_by_race()
+        self.report_absence_by_race_gender()
+        self.report_part1_notified()
+        self.report_part2_notified()
+        self.report_part1_grade_notified()
+        self.report_part2_grade_notified()
+        self.report_part3_grade_notified()
+        self.report_part1_school_notified()
+        self.report_part2_school_notified()
+        self.report_part3_school_notified()
+
+    def return_data_dict(self):
+        data_dict = dict()
+
+        data_dict["absence_by_school"] = self.absence_by_school
+        data_dict["absence_types"] = self.absence_types
+        # data_dict[""] = self.all_students
+        data_dict["absence_by_gender"] = self.absence_by_gender
+        data_dict["absence_by_grade"] = self.absence_by_grade
+        data_dict["absence_by_race"] = self.absence_by_race
+        data_dict["absence_by_racegender"] = self.absence_by_racegender
+        data_dict["absence_by_racegender_not"] = self.absence_by_racegender_not
+        data_dict["part1_notifications"] = self.part1_notifications
+        data_dict["part2_notifications"] = self.part2_notifications
+        data_dict["part1_grade_notifications"] = self.part1_grade_notifications
+        data_dict["part2_grade_notifications"] = self.part2_grade_notifications
+        data_dict["part3_grade_notifications"] = self.part3_grade_notifications
+        data_dict["part1_school_notifications"] = self.part1_school_notifications
+        data_dict["part2_school_notifications"] = self.part2_school_notifications
+        data_dict["part3_school_notifications"] = self.part3_school_notifications
+
+        return data_dict
+
     def report_all_students(self):
 
         # print(self.clean_student_data)
@@ -234,7 +275,6 @@ class AttendanceTruancySupp:
         self.absence_types = (
             pd.concat([self.absence_types, total_row])
             .assign(
-                TotalDaysAbsent=lambda df_: df_.TotalDaysAbsent + df_.DaysSuspended,
                 percentExcused=lambda df_: df_.ExcusedAbsences / df_.TotalDaysAbsent,
                 percentUnexcused=lambda df_: df_.UnexcusedAbsences
                 / df_.TotalDaysAbsent,
@@ -256,7 +296,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.absence_types.columns.name = ''
+        self.absence_types.columns.name = ""
 
     def report_absence_by_school(self):
 
@@ -277,13 +317,13 @@ class AttendanceTruancySupp:
                 TotalDaysAbsent=("TotalDaysAbsent", "sum"),
             )
             .assign(
-                TotalDaysAbsent=lambda df_: df_.TotalDaysAbsent + df_.DaysSuspended,
                 percentChronic=lambda df_: df_.chronicAbsent / df_.totalEnrollment,
                 percentExcused=lambda df_: df_.ExcusedAbsences / df_.TotalDaysAbsent,
                 percentUnexcused=lambda df_: df_.UnexcusedAbsences
                 / df_.TotalDaysAbsent,
                 percentSuspension=lambda df_: df_.DaysSuspended / df_.TotalDaysAbsent,
             )
+            .sort_values("percentChronic", ascending=False)
             .rename_axis("School Name")
             .loc[
                 :,
@@ -302,8 +342,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.absence_by_school.columns.name = ''
-
+        self.absence_by_school.columns.name = ""
 
     def report_absence_by_gender(self):
 
@@ -342,7 +381,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.absence_by_gender.columns.name=''
+        self.absence_by_gender.columns.name = ""
 
     def report_absence_by_grade(self):
 
@@ -381,7 +420,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.absence_by_grade.columns.name = ''
+        self.absence_by_grade.columns.name = ""
 
     def report_absence_by_race(self):
 
@@ -420,7 +459,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.absence_by_race.columns.name=''
+        self.absence_by_race.columns.name = ""
 
     def report_absence_by_race_gender(self):
 
@@ -464,7 +503,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.absence_by_racegender.columns.name = ''
+        self.absence_by_racegender.columns.name = ""
 
         # not chronic absent
         self.absence_by_racegender_not = (
@@ -506,7 +545,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.absence_by_racegender_not.columns.name = ''
+        self.absence_by_racegender_not.columns.name = ""
 
     def report_part1_notified(self):
 
@@ -580,7 +619,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.part1_notifications.columns.name = ''
+        self.part1_notifications.columns.name = ""
 
     def report_part2_notified(self):
 
@@ -637,7 +676,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.part2_notifications.columns.name = ''
+        self.part2_notifications.columns.name = ""
 
     def report_part1_grade_notified(self):
 
@@ -728,7 +767,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.part1_grade_notifications.columns.name = ''
+        self.part1_grade_notifications.columns.name = ""
 
     def report_part2_grade_notified(self):
 
@@ -798,7 +837,7 @@ class AttendanceTruancySupp:
             ]
             .rename(columns=self.standard_columns)
         )
-        self.part2_grade_notifications.columns.name = ''
+        self.part2_grade_notifications.columns.name = ""
 
     def report_part3_grade_notified(self):
 
@@ -860,7 +899,7 @@ class AttendanceTruancySupp:
             )
             .rename(columns=self.standard_columns)
         )
-        self.part3_grade_notifications.columns.name = ''
+        self.part3_grade_notifications.columns.name = ""
 
     def report_part1_school_notified(self):
 
@@ -945,7 +984,7 @@ class AttendanceTruancySupp:
             .rename(columns={"ID": "Total Enrollment"})
             .rename(columns=self.standard_columns)
         )
-        self.part1_school_notifications.columns.name = ''
+        self.part1_school_notifications.columns.name = ""
 
     def report_part2_school_notified(self):
 
@@ -968,11 +1007,9 @@ class AttendanceTruancySupp:
                 ],
             )
 
-        self.part2_school_notifications = (
-            self.clean_student_data
-            .groupby("SchoolName", observed=False)
-            .apply(categorize_notifications)
-        )
+        self.part2_school_notifications = self.clean_student_data.groupby(
+            "SchoolName", observed=False
+        ).apply(categorize_notifications)
 
         grade_counts = self.clean_student_data.groupby(
             "SchoolName", observed=False
@@ -1010,7 +1047,7 @@ class AttendanceTruancySupp:
             .rename(columns={"ID": "Total Enrollment"})
             .rename(columns=self.standard_columns)
         )
-        self.part2_school_notifications.columns.name = ''
+        self.part2_school_notifications.columns.name = ""
 
     def report_part3_school_notified(self):
 
@@ -1028,11 +1065,9 @@ class AttendanceTruancySupp:
                 ],
             )
 
-        self.part3_school_notifications = (
-            self.clean_student_data
-            .groupby("SchoolName", observed=False)
-            .apply(categorize_notifications)
-        )
+        self.part3_school_notifications = self.clean_student_data.groupby(
+            "SchoolName", observed=False
+        ).apply(categorize_notifications)
 
         school_counts = self.clean_student_data.groupby(
             "SchoolName", observed=False
@@ -1068,4 +1103,4 @@ class AttendanceTruancySupp:
             )
             .rename(columns=self.standard_columns)
         )
-        self.part3_school_notifications.columns.name = ''
+        self.part3_school_notifications.columns.name = ""

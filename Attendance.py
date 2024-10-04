@@ -9,12 +9,15 @@ class AttendanceDATT:
         two_yr_prior_datafile=None,
         school_type="TK-12",
         date_range=None,
+        district_level=False,
     ):
         self.current_stu_datafile = current_stu_datafile
         self.prior_yr_datafile = prior_yr_datafile
         self.two_yr_prior_datafile = two_yr_prior_datafile
         self.school_type = school_type
         self.date_range = date_range
+        self.district_level = district_level
+
         zips_db = pd.read_csv(
             "US.txt",
             sep="\t",
@@ -73,17 +76,28 @@ class AttendanceDATT:
             dtype={
                 "Grade": "str",
                 "ZipCode": "str",
+                "year": "str",
             },
             encoding="cp437",
         )
         if self.prior_yr_datafile:
             self.prior_yr_data = pd.read_csv(
                 self.prior_yr_datafile,
+                dtype={
+                    "Grade": "str",
+                    "ZipCode": "str",
+                    "year": "str",
+                },
                 encoding="cp437",
             )
         if self.two_yr_prior_datafile:
             self.two_yr_prior_data = pd.read_csv(
                 self.two_yr_prior_datafile,
+                dtype={
+                    "Grade": "str",
+                    "ZipCode": "str",
+                    "year": "str",
+                },
                 encoding="cp437",
             )
 
@@ -191,6 +205,45 @@ class AttendanceDATT:
                 }
             )
         )
+    
+    def read_data_and_run_all_reports(self):
+        self.read_data()
+        self.tweak_student()
+        self.report_by_grade()
+        self.report_by_school()
+        self.report_by_race()
+        self.report_by_gender()
+        self.report_by_race_gender()
+        self.report_by_race_grade()
+        self.report_by_sp_el_or_lunch(["IEP", "IEP Status"])
+        self.report_by_sp_el_or_lunch(["EngLearner", "EL Status"])
+        self.report_by_sp_el_or_lunch(["FreeAndReduced", "Free/Reduced Lunch Status"])
+        self.report_by_zipcode()
+        self.report_all_students()
+        self.suspensions_by_school()
+        self.report_by_district()
+
+    def return_data_dict(self):
+        data_dict = dict()
+    
+        data_dict["bygrade"] = self.bygrade
+        data_dict["bygrade_prior"] = self.bygrade_prior
+        data_dict["bygrade_two_yr_prior"] = self.bygrade_two_yr_prior
+        data_dict["byrace"] = self.byrace
+        data_dict["bygender"] = self.bygender
+        data_dict["byracegender"] = self.byracegender
+        data_dict["byracegrade"] = self.byracegrade
+        data_dict["byEngLearner"] = self.byEngLearner
+        data_dict["byIEP"] = self.byIEP
+        data_dict["byFreeReduced"] = self.byFreeReduced
+        data_dict["byzipcode"] = self.byzipcode
+        # data_dict[""] = self.all_students
+        data_dict["by_suspension_school"] = self.by_suspension_school
+        data_dict["byschool"] = self.byschool
+        data_dict["bydistrict"] = self.bydistrict
+
+        return data_dict
+
 
     def report_by_grade(self):
         self.bygrade = self.report_by_grade_yr(self.clean_student_data)
@@ -281,6 +334,7 @@ class AttendanceDATT:
                 percentAtRisk=lambda df_: df_["at risk"].div(df_.total),
                 percentSatisfactory=lambda df_: df_["satisfactory"].div(df_.total),
             )
+            .sort_values("percentChronic", ascending=False)
             .rename_axis("School")
             .loc[
                 :,
@@ -430,8 +484,34 @@ class AttendanceDATT:
 
     def report_by_race_grade(self):
         # group attendance rates by race AND grade
+        race_type = pd.CategoricalDtype(
+            categories=[
+                "HISPANIC/LATINO",
+                "WHITE",
+                "ASIAN",
+                "MULTI-RACE",
+                "OTHER",
+            ],
+            ordered=True,
+        )
+
+        modified_data = self.clean_student_data.assign(
+            Race=lambda df_: df_.Race.map(
+                {
+                    "WHITE":"WHITE",
+                    "HISPANIC/LATINO":"HISPANIC/LATINO",
+                    "ASIAN":"ASIAN",
+                    "AFRICAN AMER":"OTHER",
+                    "MULTI-RACE": "MULTI-RACE",
+                    "AMER IND/ALASK": "OTHER",
+                    "PAC ISL": "OTHER",
+                    "UNKNOWN": "OTHER",
+                }
+            ).astype(race_type)
+        )
+
         self.byracegrade = (
-            self.clean_student_data.groupby(
+            modified_data.groupby(
                 ["Race", "Grade", "Category"], observed=False
             )
             .ID.count()
@@ -698,3 +778,69 @@ class AttendanceDATT:
             .rename(columns=self.standard_columns)
         )
         self.by_suspension_school.columns.name = ""
+
+    def report_by_district(self):
+        if not self.district_level:
+            self.bydistrict = None
+            return
+        # calculcate ADA
+        districtADA = (
+            self.clean_student_data.groupby(["district"])
+            .agg({"DaysPresent": "sum", "TotalDaysAbsent": "sum", "ID": "count"})
+            .assign(
+                AverageDailyAttendance=lambda df_: df_.DaysPresent
+                / (df_.DaysPresent + df_.TotalDaysAbsent)
+            )
+            .rename(columns={"ID": "TotalStudents", "DaysPresent": "TotalDaysPresent"})
+        )
+
+        # calculate free reduced lunch
+        FreeReduced = (
+            self.clean_student_data.query('FreeAndReduced == "YES"')
+            .groupby("district")
+            .ID.count()
+        )
+        districtADA = districtADA.assign(NumberFreeReduced=FreeReduced).assign(
+            percentFreeReduced=lambda df_: df_.NumberFreeReduced / df_.TotalStudents
+        )
+
+        # group attendance rates by school
+        self.bydistrict = (
+            self.clean_student_data.groupby(["district", "Category"], observed=False)
+            .ID.count()
+            .unstack()
+            .assign(total=lambda df_: df_.sum(1))
+        )
+        self.bydistrict = pd.concat([self.bydistrict, districtADA], axis=1)
+        self.bydistrict = (
+            self.bydistrict.assign(
+                allChronic=lambda df_: df_["moderate chronic"] + df_["severe chronic"],
+                percentSevere=lambda df_: df_["severe chronic"].div(df_.total),
+                percentModerate=lambda df_: df_["moderate chronic"].div(df_.total),
+                percentChronic=lambda df_: df_["allChronic"].div(df_.total),
+                percentAtRisk=lambda df_: df_["at risk"].div(df_.total),
+                percentSatisfactory=lambda df_: df_["satisfactory"].div(df_.total),
+            )
+            .sort_values("percentChronic", ascending=False)
+            .rename_axis("District")
+            .loc[
+                :,
+                [
+                    "percentFreeReduced",
+                    "AverageDailyAttendance",
+                    "severe chronic",
+                    "percentSevere",
+                    "moderate chronic",
+                    "percentModerate",
+                    "allChronic",
+                    "percentChronic",
+                    "at risk",
+                    "percentAtRisk",
+                    "satisfactory",
+                    "percentSatisfactory",
+                    "total",
+                ],
+            ]
+            .rename(columns=self.standard_columns)
+        )
+        self.bydistrict.columns.name = ""
