@@ -965,6 +965,7 @@ class AttendanceTruancySupp:
                 percentBoth=lambda df_: df_.BOTHLetterANDNotice / df_.NumStudents,
             )
             .rename_axis(["School Name"])
+            .sort_values("PctOfGrade", ascending=False)
             .loc[
                 :,
                 [
@@ -1028,6 +1029,7 @@ class AttendanceTruancySupp:
                 percentThreeMoreNOT=lambda df_: df_.ThreeMoreNOT / df_.NumStudents,
             )
             .rename_axis(["School Name"])
+            .sort_values("PctOfGrade", ascending=False)
             .loc[
                 :,
                 [
@@ -1084,6 +1086,7 @@ class AttendanceTruancySupp:
                 / df_.NumStudents,
             )
             .rename_axis(["School Name"])
+            .sort_values("PctOfGrade", ascending=False)
             .loc[
                 :,
                 [

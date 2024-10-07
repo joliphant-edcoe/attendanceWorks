@@ -1,14 +1,22 @@
 import pandas as pd
+import datetime
 
 # LIST ATT SC SN DY CD PR GR TR TN AL DT DTS 
+# pollock
+# LIST ATT SC SN DY CD PR GR TR TN AL DT DTS IF SC # 33
+# silver fork
+# LIST ATT SC SN DY CD PR GR TR TN AL DT DTS IF SC = 33
 
 class AttendanceHeatMap:
     def __init__(self, att_datafile):
         self.att_datafile = att_datafile
 
     def tweak_data(self, df):
+        today = datetime.datetime.now().date()
+
         daily_absence = (
-            df.rename(columns={"Student#": "StudentNumber", "All day": "AllDay"})
+            df.query('Date <= @today')
+            .rename(columns={"Student#": "StudentNumber", "All day": "AllDay"})
             .fillna("00")
             .assign(
                 excused=lambda df_:df_.AllDay.isin(["I", "G", "X"]),
@@ -30,6 +38,7 @@ class AttendanceHeatMap:
             [daily_absence, enroll_changes.cumsum()], axis=1
         ).assign(pctAbsent=lambda df_: df_.combined / df_.EntLv)
 
+        # TODO: need to filter for dates before current date.
         return absence_by_date
 
     def read_process_data(self):
