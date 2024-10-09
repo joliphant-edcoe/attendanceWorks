@@ -25,15 +25,15 @@ class AttendanceDATT:
                 "countryCode",
                 "postalCode",
                 "placeName",
-                "b",
-                "c",
-                "d",
-                "e",
-                "f",
-                "a",
-                "ge",
-                "grg",
-                "asd",
+                "unused1",
+                "unused2",
+                "unused3",
+                "unused4",
+                "unused5",
+                "unused6",
+                "unused7",
+                "unused8",
+                "unused9",
             ],
             dtype={"postalCode": "str"},
         )
@@ -71,6 +71,15 @@ class AttendanceDATT:
         }
 
     def read_data(self):
+
+        def line_fixer(row):
+            # print(f"this row has {len(row)} elements")
+            # print(f"{row=}")
+            fixedrow=row[:2] + [" ".join(row[2:4])] + row[4:]
+            # print(f"{fixedrow}")
+            return fixedrow
+            # return None  # to skip
+
         self.current_stu_data = pd.read_csv(
             self.current_stu_datafile,
             dtype={
@@ -79,6 +88,8 @@ class AttendanceDATT:
                 "year": "str",
             },
             encoding="cp437",
+            on_bad_lines=line_fixer,
+            engine="python",
         )
         if self.prior_yr_datafile:
             self.prior_yr_data = pd.read_csv(
@@ -89,6 +100,8 @@ class AttendanceDATT:
                     "year": "str",
                 },
                 encoding="cp437",
+                on_bad_lines=line_fixer,
+                engine="python",
             )
         if self.two_yr_prior_datafile:
             self.two_yr_prior_data = pd.read_csv(
@@ -99,6 +112,8 @@ class AttendanceDATT:
                     "year": "str",
                 },
                 encoding="cp437",
+                on_bad_lines=line_fixer,
+                engine="python",
             )
 
     def tweak_student(self):
@@ -205,7 +220,7 @@ class AttendanceDATT:
                 }
             )
         )
-    
+
     def read_data_and_run_all_reports(self):
         self.read_data()
         self.tweak_student()
@@ -225,10 +240,11 @@ class AttendanceDATT:
 
     def return_data_dict(self):
         data_dict = dict()
-    
+
         data_dict["bygrade"] = self.bygrade
         data_dict["bygrade_prior"] = self.bygrade_prior
         data_dict["bygrade_two_yr_prior"] = self.bygrade_two_yr_prior
+        data_dict["bygrade3yrs"] = self.bygrade3yrs 
         data_dict["byrace"] = self.byrace
         data_dict["bygender"] = self.bygender
         data_dict["byracegender"] = self.byracegender
@@ -243,7 +259,6 @@ class AttendanceDATT:
         data_dict["bydistrict"] = self.bydistrict
 
         return data_dict
-
 
     def report_by_grade(self):
         self.bygrade = self.report_by_grade_yr(self.clean_student_data)
@@ -498,10 +513,10 @@ class AttendanceDATT:
         modified_data = self.clean_student_data.assign(
             Race=lambda df_: df_.Race.map(
                 {
-                    "WHITE":"WHITE",
-                    "HISPANIC/LATINO":"HISPANIC/LATINO",
-                    "ASIAN":"ASIAN",
-                    "AFRICAN AMER":"OTHER",
+                    "WHITE": "WHITE",
+                    "HISPANIC/LATINO": "HISPANIC/LATINO",
+                    "ASIAN": "ASIAN",
+                    "AFRICAN AMER": "OTHER",
                     "MULTI-RACE": "MULTI-RACE",
                     "AMER IND/ALASK": "OTHER",
                     "PAC ISL": "OTHER",
@@ -511,9 +526,7 @@ class AttendanceDATT:
         )
 
         self.byracegrade = (
-            modified_data.groupby(
-                ["Race", "Grade", "Category"], observed=False
-            )
+            modified_data.groupby(["Race", "Grade", "Category"], observed=False)
             .ID.count()
             .unstack()
             .assign(total=lambda df_: df_.sum(1))

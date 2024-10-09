@@ -1,21 +1,25 @@
 import pandas as pd
-import datetime
 
 # LIST ATT SC SN DY CD PR GR TR TN AL DT DTS 
 # pollock
 # LIST ATT SC SN DY CD PR GR TR TN AL DT DTS IF SC # 33
 # silver fork
 # LIST ATT SC SN DY CD PR GR TR TN AL DT DTS IF SC = 33
+# edcoe sped
+# LIST ATT SC SN DY CD PR GR TR TN AL DT DTS IF SC = 68 OR SC = 69 OR SC = 70 OR SC = 72
+# edcoe charter
+# LIST ATT SC SN DY CD PR GR TR TN AL DT DTS IF SC = 51 OR SC = 101 OR SC = 150
 
 class AttendanceHeatMap:
-    def __init__(self, att_datafile):
+    def __init__(self, att_datafile, cutoff_date):
         self.att_datafile = att_datafile
+        self.cutoff_date = cutoff_date
 
     def tweak_data(self, df):
-        today = datetime.datetime.now().date()
+        df_past = df.query('Date <= @self.cutoff_date')
 
         daily_absence = (
-            df.query('Date <= @today')
+            df_past
             .rename(columns={"Student#": "StudentNumber", "All day": "AllDay"})
             .fillna("00")
             .assign(
@@ -29,7 +33,7 @@ class AttendanceHeatMap:
         )
 
         enroll_changes = (
-            df.assign(EntLv=df["Ent/Lv"].map({"E": 1, "L": -1}).fillna(0).astype("int"))
+            df_past.assign(EntLv=df["Ent/Lv"].map({"E": 1, "L": -1}).fillna(0).astype("int"))
             .groupby("Date")
             .EntLv.sum()
         )

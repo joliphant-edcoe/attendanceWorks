@@ -104,13 +104,7 @@ class AttendanceExcelGenerator:
             year_str=self.two_yr_prior_year_str,
         )
 
-        self._write_df_to_excel(
-            self.template_wb["School Summary"],
-            self.adatt.byschool.reset_index(),
-            [2],
-            [6],
-            start_col=1,
-        )
+        
         self._write_df_to_excel(
             self.template_wb["By Grade, Overall"],
             self.adatt.bygrade,
@@ -189,6 +183,14 @@ class AttendanceExcelGenerator:
             [2],
             [1],
             start_row=4,
+            start_col=1,
+        )
+
+        self._write_df_to_excel(
+            self.template_wb["School Summary"],
+            self.adatt.byschool.reset_index(),
+            [2],
+            [6],
             start_col=1,
         )
 

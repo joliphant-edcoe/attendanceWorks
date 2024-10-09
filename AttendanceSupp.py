@@ -43,6 +43,10 @@ class AttendanceTruancySupp:
         }
 
     def read_data(self):
+        def line_fixer(row):
+            fixedrow = row[:2] + [" ".join(row[2:4])] + row[4:]
+            return fixedrow
+
         self.current_stu_data = pd.read_csv(
             self.current_stu_datafile,
             dtype={
@@ -50,6 +54,8 @@ class AttendanceTruancySupp:
                 "ZipCode": "str",
             },
             encoding="cp437",
+            on_bad_lines=line_fixer,
+            engine="python",
         )
 
     def tweak_student(self):
@@ -174,6 +180,7 @@ class AttendanceTruancySupp:
         self.report_absence_by_race_gender()
         self.report_part1_notified()
         self.report_part2_notified()
+        self.report_part3_notified()
         self.report_part1_grade_notified()
         self.report_part2_grade_notified()
         self.report_part3_grade_notified()
@@ -194,6 +201,7 @@ class AttendanceTruancySupp:
         data_dict["absence_by_racegender_not"] = self.absence_by_racegender_not
         data_dict["part1_notifications"] = self.part1_notifications
         data_dict["part2_notifications"] = self.part2_notifications
+        data_dict["part3_notifications"] = self.part3_notifications
         data_dict["part1_grade_notifications"] = self.part1_grade_notifications
         data_dict["part2_grade_notifications"] = self.part2_grade_notifications
         data_dict["part3_grade_notifications"] = self.part3_grade_notifications
@@ -620,6 +628,26 @@ class AttendanceTruancySupp:
             .rename(columns=self.standard_columns)
         )
         self.part1_notifications.columns.name = ""
+
+    def report_part3_notified(self):
+        "must be run after repor_part1_notified()"
+        self.part3_notifications = pd.DataFrame().assign(
+            NoLetter=self.part1_notifications["No Notifications"]
+            + self.part1_notifications["Notice of Truancy (only)"],
+            NoLetterPCT=self.part1_notifications["No Notifications PERCENT"]
+            + self.part1_notifications["Notice of Truancy (only) PERCENT"],
+            ExcessiveLetter=self.part1_notifications["Excessive Absence Letter (only)"]
+            + self.part1_notifications[
+                "BOTH: Excessive Absence Letter AND Notice of Truancy"
+            ],
+            ExcessiveLetterPCT=self.part1_notifications[
+                "Excessive Absence Letter (only) PERCENT"
+            ]
+            + self.part1_notifications[
+                "BOTH: Excessive Absence Letter AND Notice of Truancy PERCENT"
+            ],
+        )
+        # print(self.part3_notifications)
 
     def report_part2_notified(self):
 
