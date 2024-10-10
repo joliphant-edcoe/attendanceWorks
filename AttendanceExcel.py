@@ -104,7 +104,6 @@ class AttendanceExcelGenerator:
             year_str=self.two_yr_prior_year_str,
         )
 
-        
         self._write_df_to_excel(
             self.template_wb["By Grade, Overall"],
             self.adatt.bygrade,
@@ -288,7 +287,7 @@ class AttendanceExcelGenerator:
         self._write_df_to_excel(
             self.truancy_template_wb["NOTs by Grade"],
             self.truancy.part1_grade_notifications,
-            [2, 10+self.num_grades],
+            [2, 10 + self.num_grades],
             [3, 4],
             start_row=6,
             start_col=2,
@@ -297,18 +296,18 @@ class AttendanceExcelGenerator:
         self._write_df_to_excel(
             self.truancy_template_wb["NOTs by Grade"],
             self.truancy.part2_grade_notifications,
-            [a+self.num_grades for a in [29,49]],
+            [a + self.num_grades for a in [29, 49]],
             [4, 4],
-            start_row=46,
+            start_row=self.num_grade + 32,
             start_col=2,
         )
 
         self._write_df_to_excel(
             self.truancy_template_wb["NOTs by Grade"],
             self.truancy.part3_grade_notifications,
-            [67+self.num_grades],
+            [67 + self.num_grades],
             [4],
-            start_row=85,
+            start_row=2 * self.num_grades + 57,
             start_col=2,
         )
 

@@ -6,9 +6,17 @@ import pickle
 import os
 import datetime
 
-# from AttendanceCharts import AttendanceChartsExcel
 
-districts = os.listdir("oneFiletoRuleThemAll_oct24/")
+
+BASE_PATH = "oneFiletoRuleThemAll_oct24/"
+YEAR_CODE1 = '2425'
+YEAR_CODE2 = '2324'
+YEAR_CODE3 = '2223'
+CUTOFF_DATE = datetime.datetime(2024,10,4)
+FILENAME_DATE = 'Oct24'
+
+
+districts = os.listdir(BASE_PATH)
 districts
 
 district_type = [
@@ -34,7 +42,7 @@ district_type = [
 all_data = dict()
 
 for i, d in enumerate(districts):
-    path = os.path.join("oneFiletoRuleThemAll_oct24", d)
+    path = os.path.join(BASE_PATH, d)
     files = os.listdir(path)
 
     att_file = [s for s in files if "atttable" in s.lower()]
@@ -43,9 +51,9 @@ for i, d in enumerate(districts):
     else:
         att_data_file = ""
 
-    current = [s for s in files if "2425" in s][0]
-    last = [s for s in files if "2324" in s][0]
-    last2 = [s for s in files if "2223" in s][0]
+    current = [s for s in files if YEAR_CODE1 in s][0]
+    last = [s for s in files if YEAR_CODE2 in s][0]
+    last2 = [s for s in files if YEAR_CODE3 in s][0]
 
 
     current_stu_datafile = os.path.join(path, current)
@@ -78,14 +86,14 @@ for i, d in enumerate(districts):
     truancy = AttendanceTruancySupp(current_stu_datafile, school_type=district_type[i])
     truancy.read_data_and_run_all_reports()
 
-    heatmap = AttendanceHeatMap(att_datafile=att_data_file,cutoff_date=datetime.datetime(2024,10,4))
+    heatmap = AttendanceHeatMap(att_datafile=att_data_file,cutoff_date=CUTOFF_DATE)
     heatmap.read_process_data()
 
     excelwrite = AttendanceExcelGenerator(
         adatt,
         truancy,
-        f"auto_excel_files/24-25 Cal DATT AW - ({d} Oct24).xlsx",
-        f"auto_excel_files/24-25 Cal DATT Truancy - ({d} Oct24).xlsx",
+        f"auto_excel_files/24-25 Cal DATT AW - ({d} {FILENAME_DATE}).xlsx",
+        f"auto_excel_files/24-25 Cal DATT Truancy - ({d} {FILENAME_DATE}).xlsx",
         school_type=district_type[i],
     )
     excelwrite.append_data_to_templates()
@@ -95,7 +103,6 @@ for i, d in enumerate(districts):
         **truancy.return_data_dict(),
         **heatmap.return_data_dict(),
     }
-    # break
 
-# with open("all_data_oct24.pickle", "wb") as f:
-#     pickle.dump(all_data, f)
+with open(f"all_data_{FILENAME_DATE}.pickle", "wb") as f:
+    pickle.dump(all_data, f)
