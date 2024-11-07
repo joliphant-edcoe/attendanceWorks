@@ -1,5 +1,7 @@
 import pandas as pd
 
+#for Tiered letters at Charter (CHSA for now)
+#LIST STU INV STU.NM STU.ID STU.SC INV.SN INV.CD IF STU.SC = 51
 
 class AttendanceDATT:
     def __init__(

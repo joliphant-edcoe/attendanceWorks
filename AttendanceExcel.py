@@ -296,16 +296,16 @@ class AttendanceExcelGenerator:
         self._write_df_to_excel(
             self.truancy_template_wb["NOTs by Grade"],
             self.truancy.part2_grade_notifications,
-            [a + self.num_grades for a in [29, 49]],
+            [29 + self.num_grades, 35 + 2 * self.num_grades],  # 4->33,43    10->39,55
             [4, 4],
-            start_row=self.num_grade + 32,
+            start_row=self.num_grades + 32,
             start_col=2,
         )
 
         self._write_df_to_excel(
             self.truancy_template_wb["NOTs by Grade"],
             self.truancy.part3_grade_notifications,
-            [67 + self.num_grades],
+            [53 + self.num_grades * 2],  # 4->61     10->73
             [4],
             start_row=2 * self.num_grades + 57,
             start_col=2,

@@ -1,4 +1,5 @@
 import pandas as pd
+from tierLetters import get_students_tier_intervention, merge_with_attendanceWorks
 
 
 class AttendanceTruancySupp:
@@ -7,6 +8,7 @@ class AttendanceTruancySupp:
         current_stu_datafile,
         school_type="TK-12",
         date_range=None,
+        **kwargs
     ):
         self.current_stu_datafile = current_stu_datafile
         self.school_type = school_type
@@ -41,6 +43,10 @@ class AttendanceTruancySupp:
             "percentThreeMoreNOT": "PERCENT Three or More",
             "PctOfGrade": "Pct of Grade",
         }
+        if kwargs.get('tier_file'):
+            self.tier = get_students_tier_intervention(kwargs['tier_file'])
+        else:
+            self.tier = None
 
     def read_data(self):
         def line_fixer(row):
@@ -57,6 +63,9 @@ class AttendanceTruancySupp:
             on_bad_lines=line_fixer,
             engine="python",
         )
+
+        if self.tier is not None:
+            self.current_stu_data = merge_with_attendanceWorks(self.current_stu_data,self.tier)
 
     def tweak_student(self):
         df = self.current_stu_data

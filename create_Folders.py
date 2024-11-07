@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-base_path = "oneFiletoRuleThemAll_oct24"
+base_path = "oneFiletoRuleThemAll_nov24"
 subfolders_level1 = [
     "black_oak_mine_unified",
     "camino_unified",
@@ -47,7 +47,7 @@ for sub in subfolders_level1:
             year = components[-1].split()[-1]
 
         print(f, year, sub)
-        if year == "2223":
+        if year == "2425":
             df = pd.read_csv(
                 os.path.join(os.path.join(base_path, sub), f),
                 encoding="cp437",
@@ -61,4 +61,4 @@ for sub in subfolders_level1:
 
 mondo = pd.concat(list_df)
 print(mondo)
-mondo.to_csv("allCountyAttendanceWorks_2223.csv", index=False)
+mondo.to_csv(os.path.join(os.path.join(base_path,'all_county'),"allCountyAttendanceWorks_2425.csv"), index=False)
